@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ユーザープロファイルのルール
+    match /users/{userId} {
+      // 認証済みユーザーのみ自分のプロファイルの読み書きが可能
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // トラッキング対象ユーザーのサブコレクション
+      match /trackedUsers/{trackedUserId} {
+        // 認証済みユーザーのみ自分のトラッキングデータの読み書きが可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // 共通のバリデーションルール
+    function isValidUser() {
+      let user = request.resource.data;
+      return user.keys().hasAll(['name', 'cycleLength', 'periodLength', 'lastPeriodStart']) &&
+             user.name is string && user.name.size() > 0 &&
+             user.cycleLength is number && user.cycleLength >= 20 && user.cycleLength <= 40 &&
+             user.periodLength is number && user.periodLength >= 3 && user.periodLength <= 10 &&
+             user.lastPeriodStart is timestamp;
+    }
+
+    function isValidSubscription() {
+      let subscription = request.resource.data;
+      return subscription.keys().hasAll(['subscriptionStatus']) &&
+             subscription.subscriptionStatus in ['free', 'premium'];
+    }
+  }
+}

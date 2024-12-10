@@ -1,0 +1,6 @@
+{
+  "startCommand": "npm start",
+  "env": {
+    "VITE_EMULATE_FIREBASE": "true"
+  }
+}
